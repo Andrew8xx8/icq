@@ -52,14 +52,4 @@ module Icq
       new.respond_to?(method, include_private) || super(method, include_private)
     end
   end
-#  def self.connect
-#    EM.run do
-#      # Create your name-password
-#      uin, password = '609241916', 'Q0sxqiyg'
-#      listener = Listener.new
-#p listener
-#      client = OSCAR.connect uin, password, listener
-#      listener.client = client
-#    end
-#  end
 end
