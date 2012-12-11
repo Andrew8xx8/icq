@@ -72,7 +72,7 @@ Code in this callback will be executed every 2 seconds
     puts "Executing timer event: #{Time.now}"
   end
 
-   client.start
+  client.start
 ```
 
 ## Contributing
