@@ -16,10 +16,10 @@ module Icq
 
     attr_accessor :listener, :local_host
 
-    def self.connect *args
-      p self
+    def self.connect(server, port, uin, password, listener)
       # TODO async dns
-      EM.connect 'login.icq.com', 5190, self, *args
+      EM.connect server, port, self, uin, password, listener
+      p server, port, uin, password, listener
       # rescue Exception
       # resolving exception
     end

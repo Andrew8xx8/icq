@@ -5,6 +5,5 @@ class IcqTest < TestCase
   end
 
   def test_login
-    Icq.new
   end
 end
