@@ -1,25 +1,10 @@
 module Icq
   class Client
 
-    OPTION_CALLBACKS = [:delete,
-                        :scrub_geo,
-                        :limit,
-                        :error,
-                        :enhance_your_calm,
-                        :unauthorized,
-                        :reconnect,
-                        :inited,
-                        :direct_message,
-                        :timeline_status,
-                        :anything,
-                        :no_data_received,
-                        :status_withheld,
-                        :user_withheld].freeze unless defined?(OPTION_CALLBACKS)
-
     # @private
     attr_accessor *Configuration::VALID_OPTIONS_KEYS
     attr_accessor :options
-    attr_reader :control_uri, :control, :stream
+    attr_reader :control_uri, :control, :connection
 
     # Creates a new API
     def initialize(options={})
@@ -30,6 +15,7 @@ module Icq
       end
       @callbacks = {}
 
+      on('ready') {}
       on('roster') {}
       on('auth_error') {}
       on('connection_error') {}
@@ -97,17 +83,17 @@ module Icq
     end
 
     def method_missing(method, *args, &block)
+      p method
       if @callbacks.has_key? method.to_s
-        @callbacks[method.to_s].call(*args, self)
-      else
-        return super unless @connection.respond_to?(method)
-        @connection.send(method, *args, &block)
+        @callbacks[method.to_s].call(*args, @connection)
+#      else
+#        return super unless @connection.client.respond_to?(method)
+#        @connection.client.send(method, *args, &block)
       end
     end
 
     def respond_to?(method, include_private=false)
-      @callbacks.has_key method 
-      @connection.respond_to?(method, include_private) || super(method, include_private)
+      @connection.client.respond_to?(method, include_private) || super(method, include_private)
     end
 
     # Terminate the currently running Icq and close EventMachine loop
@@ -126,60 +112,5 @@ module Icq
     end
 
     protected
-
-    def normalize_filter_parameters(query_parameters = {})
-      [:follow, :track, :locations].each do |param|
-        if query_parameters[param].kind_of?(Array)
-          query_parameters[param] = query_parameters[param].flatten.collect { |q| q.to_s }.join(',')
-        elsif query_parameters[param]
-          query_parameters[param] = query_parameters[param].to_s
-        end
-      end
-      query_parameters
-    end
-
-    # A utility method used to invoke callback methods against the Client
-    def invoke_callback(callback, *args)
-      callback.call(*args) if callback
-    end
-
-    def yield_message_to(procedure, message)
-      # Give the block the option to receive either one
-      # or two arguments, depending on its arity.
-      if procedure.is_a?(Proc)
-        case procedure.arity
-        when 1 then invoke_callback(procedure, message)
-        when 2 then invoke_callback(procedure, message, self)
-        end
-      end
-    end
-
-    def connection_options(path, options)
-      warn_if_callbacks(options)
-
-      callbacks = @callbacks.dup
-      OPTION_CALLBACKS.each do |callback|
-        callbacks.merge(callback.to_s => options.delete(callback)) if options[callback]
-      end
-
-      inited_proc             = options.delete(:inited)                  || @callbacks['inited']
-      extra_stream_parameters = options.delete(:extra_stream_parameters) || {}
-
-      stream_params = {
-        :path       => path,
-        :method     => (options.delete(:method) || 'get').to_s.upcase,
-        :user_agent => user_agent,
-        :on_inited  => inited_proc,
-        :params     => normalize_filter_parameters(options)
-      }.merge(extra_stream_parameters).merge(auth_params)
-
-      [stream_params, callbacks]
-    end
-
-    def warn_if_callbacks(options={})
-      if OPTION_CALLBACKS.select { |callback| options[callback] }.size > 0
-        Kernel.warn("Passing callbacks via the options hash is deprecated and will be removed in Icq 3.0")
-      end
-    end
   end
 end

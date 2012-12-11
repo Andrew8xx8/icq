@@ -19,7 +19,6 @@ module Icq
     def self.connect(server, port, uin, password, listener)
       # TODO async dns
       EM.connect server, port, self, uin, password, listener
-      p server, port, uin, password, listener
       # rescue Exception
       # resolving exception
     end
