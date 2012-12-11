@@ -83,12 +83,8 @@ module Icq
     end
 
     def method_missing(method, *args, &block)
-      p method
       if @callbacks.has_key? method.to_s
         @callbacks[method.to_s].call(*args, @connection)
-#      else
-#        return super unless @connection.client.respond_to?(method)
-#        @connection.client.send(method, *args, &block)
       end
     end
 
